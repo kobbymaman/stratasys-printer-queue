@@ -1,0 +1,39 @@
+a {
+  color: #0366d6;
+}
+
+code {
+  color: #e01a76;
+}
+
+.btn-primary {
+  color: #fff;
+  background-color: #1b6ec2;
+  border-color: #1861ac;
+}
+
+.jumbotron {
+  padding: 2rem 2rem;
+  background-color: #dc9898;
+  margin-bottom: 1rem;
+}
+
+.new-job-box {
+  border: 3px solid;
+  border-color: #dc9898;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  margin-right: unset;
+  margin-left: unset;
+}
+
+.new-job-box button {
+    margin-top: 9%;
+  }
+
+fa {
+    cursor:pointer;
+}
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }

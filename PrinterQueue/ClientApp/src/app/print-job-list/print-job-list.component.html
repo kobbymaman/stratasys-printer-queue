@@ -1,0 +1,43 @@
+<p *ngIf="!printJobs"><em>Loading...</em></p>
+
+<div class="new-job-box row">
+  <div class="col-md-3">
+    <mat-form-field>
+      <input matInput placeholder="Job Name" #newJobNameInput>
+    </mat-form-field>
+  </div>
+  <div class="col-md-6">
+    <ngx-duration-picker [(value)]="this.newJobDurationISO" [options]="jobDurationOptions"></ngx-duration-picker>
+  </div>
+  <div class="col-md-3">
+    <button mat-raised-button color="primary" (click)="addNewJob()">Add New Job</button>
+  </div>
+</div>
+
+<table class='table table-striped' aria-labelledby="tableLabel" *ngIf="printJobs">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Start Time</th>
+      <th>End Time</th>
+      <th>Status</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let printJob of printJobs">
+      <td>{{ printJob.name }}</td>
+      <td>{{ printJob.startDate | date : "dd/MM/yyyy HH:mm:ss" }}</td>
+      <td>{{ printJob.endDate | date : "dd/MM/yyyy HH:mm:ss" }}</td>
+      <td>{{ printJob.status }}</td>
+      <td>
+        <div class="row">
+          <fa class="col-md-3" name="chevron-circle-up" size="2x" title="Move Up" (click)="moveUp(printJob.id)"></fa>
+          <fa class="col-md-3" name="chevron-circle-down" size="2x" title="Move Down" (click)="moveDown(printJob.id)"></fa>
+          <fa class="col-md-3" name="trash" size="2x" title="Delete" (click)="delete(printJob.id)"></fa>
+          <fa *ngIf="printJob.status === 'Printing'" class="col-md-3" name="ban" size="2x" title="Cancel" (click)="cancelPrintingJob()"></fa>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
