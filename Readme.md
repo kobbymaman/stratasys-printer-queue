@@ -20,7 +20,7 @@ somehow I thought it should be only some static queue management without the act
 later after talking to Ariel I understand what was expected.
 Performing background long time jobs in webserver application is not a good practice, 
 this stuff should handled with external windows service or with the actual printer and it's probaly exposed API.
-Anyway I succeeded doing something that makes it look and feel near the desired mission
+Anyway I succeeded doing something that makes it look and feel near the desired goal
 with background loop task informing the client with signalr, it's not so thread safe.
 Also since I'm using json file as db, I asking the wholde "DB" after each operation made, to keep it consistent as I can.
 For my convenience I assumed that a cancelled job is going to the end of the queue and will be reprinted when it's new time will come unless you delete it before, also you can't cancel printing job if it's the only job left in the queue, 
