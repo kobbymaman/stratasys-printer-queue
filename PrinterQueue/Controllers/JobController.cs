@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using PrinterQueue.Database;
 using PrinterQueue.Models;
+using PrinterQueue.Services;
 
 namespace PrinterQueue.Controllers
 {
@@ -11,9 +13,13 @@ namespace PrinterQueue.Controllers
     public class JobController : ControllerBase
     {
         private readonly IJobsRepository _repository;
-        public JobController(IJobsRepository repo)
+        private readonly IHubContext<SignalRHub> _hub;
+        private static PrinterService _printerService;
+        public JobController(IJobsRepository repo, IHubContext<SignalRHub> hub)
         {
             _repository = repo;
+            _hub = hub;
+            _printerService = new PrinterService(_repository, _hub);
         }
 
         [HttpGet]
@@ -28,8 +34,24 @@ namespace PrinterQueue.Controllers
             {
                 return BadRequest(ex.Message);
             }
-
+                        
             return Ok(result);
+        }
+
+        [HttpPost]
+        [Route("InitPrinting")]
+        public IActionResult InitPrinting()
+        {
+            try
+            {
+                _printerService.StartPrinting();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+            return Ok();
         }
 
         [HttpPost]
@@ -38,7 +60,11 @@ namespace PrinterQueue.Controllers
         {
             try
             {
-                _repository.AddNewJob(pj);
+                bool isItJobToPrintNow = _repository.AddNewJob(pj);
+                if (isItJobToPrintNow)
+                {
+                    _printerService.StartPrinting();
+                }
             }
             catch (Exception ex)
             {
@@ -87,6 +113,7 @@ namespace PrinterQueue.Controllers
             try
             {
                 _repository.CancelPrintingJob();
+                _printerService.CancelPrintingJob();
             }
             catch (Exception ex)
             {

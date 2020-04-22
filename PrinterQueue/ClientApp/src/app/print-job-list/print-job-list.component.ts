@@ -1,4 +1,5 @@
 import { OnInit, Component, Inject, ElementRef, ViewChild } from '@angular/core';
+import * as signalR from '@aspnet/signalr';
 import { HttpClient } from '@angular/common/http';
 import * as moment from 'moment';
 import { MessageDialog } from '../message-dialog/message-dialog.component';
@@ -9,9 +10,8 @@ import { MatDialog } from '@angular/material';
   templateUrl: './print-job-list.component.html',
 })
 export class PrintJobListComponent implements OnInit {
-  //private readonly dialog: MatDialog;
-  //private readonly httpClient: HttpClient;
-  //private readonly baseUrl: string;
+  private hubConnection: signalR.HubConnection;
+
   private currentTime: moment.Moment = moment();
   private printJobs: IPrintJob[];
   private jobDurationOptions = {
@@ -27,17 +27,20 @@ export class PrintJobListComponent implements OnInit {
   @ViewChild('newJobNameInput', { static: true }) newJobNameInput: ElementRef;
 
   constructor(private readonly dialog: MatDialog, private readonly httpClient: HttpClient, @Inject('BASE_URL') private readonly baseUrl: string) {
-    //this.dialog = dialog; 
-    //this.httpClient = http;
-    //this.baseUrl = baseUrl;
+
   }
 
   public async ngOnInit(): Promise<void>  {
+    this.setSignalREvents();
     await this.getAndDisplayAllJobs();
+    await this.initPrinting();
   }
 
   public async getAndDisplayAllJobs() : Promise<void> {
     await this.httpClient.get<IPrintJob[]>(this.baseUrl + 'Job').subscribe(resultArr => {
+      if (resultArr.length == 1) {
+        this.currentTime = moment();
+      }
       let jobTime = moment(this.currentTime);
       resultArr.forEach(job => {
         job.startDate = jobTime.toDate();
@@ -50,6 +53,16 @@ export class PrintJobListComponent implements OnInit {
         let dialogRef = this.dialog.open(MessageDialog, {
           data: { message: error.message },
         });
+    });
+  }
+
+  public async initPrinting() {
+    this.httpClient.post<IPrintJob[]>(this.baseUrl + 'Job/InitPrinting', undefined).subscribe(async result => {
+
+    }, err => {
+      let dialogRef = this.dialog.open(MessageDialog, {
+        data: { message: err.error },
+      });
     });
   }
 
@@ -109,6 +122,28 @@ export class PrintJobListComponent implements OnInit {
       let dialogRef = this.dialog.open(MessageDialog, {
         data: { message: err.error },
       });
+    });
+  }
+
+  public setSignalREvents() {
+    this.hubConnection = new signalR.HubConnectionBuilder()
+      .withUrl(this.baseUrl + 'jobstatus').build();
+
+    this.hubConnection.start().then(() => {
+      console.log("connection started");
+    }).catch(err => console.log(err));
+
+    this.hubConnection.onclose(() => {
+      setTimeout(() => {
+        this.hubConnection.start().then(() => {
+          console.log("connection restarted");
+        }).catch(err => console.log(err));
+      }, 5000);
+    });
+
+    this.hubConnection.on('printjobcompleted', async (info) => {
+      console.log(info);
+      await this.getAndDisplayAllJobs();
     });
   }
 }

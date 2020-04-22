@@ -35,7 +35,7 @@
           <fa class="col-md-3" name="chevron-circle-up" size="2x" title="Move Up" (click)="moveUp(printJob.id)"></fa>
           <fa class="col-md-3" name="chevron-circle-down" size="2x" title="Move Down" (click)="moveDown(printJob.id)"></fa>
           <fa class="col-md-3" name="trash" size="2x" title="Delete" (click)="delete(printJob.id)"></fa>
-          <fa *ngIf="printJob.status === 'Printing'" class="col-md-3" name="ban" size="2x" title="Cancel" (click)="cancelPrintingJob()"></fa>
+          <fa *ngIf="printJob.status === 'Printing' && printJobs.length > 1" class="col-md-3" name="ban" size="2x" title="Cancel" (click)="cancelPrintingJob()"></fa>
         </div>
       </td>
     </tr>

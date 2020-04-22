@@ -5,6 +5,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PrinterQueue.Database;
+using PrinterQueue.Models;
+using System;
 
 namespace PrinterQueue
 {
@@ -20,7 +22,7 @@ namespace PrinterQueue
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton<IJobsRepository, FileJobsRepository>();
+            services.AddScoped<IJobsRepository, FileJobsRepository>();
 
             services.AddControllersWithViews();
             // In production, the Angular files will be served from this directory
@@ -28,6 +30,9 @@ namespace PrinterQueue
             {
                 configuration.RootPath = "ClientApp/dist";
             });
+
+            // Register SignalR
+            services.AddSignalR();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -50,11 +55,18 @@ namespace PrinterQueue
 
             app.UseRouting();
 
+            app.UseWebSockets(new WebSocketOptions
+            {
+                KeepAliveInterval = TimeSpan.FromSeconds(120),
+            });
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller}/{action=Index}/{id?}");
+
+                endpoints.MapHub<SignalRHub>("/jobstatus");
             });
 
             app.UseSpa(spa =>

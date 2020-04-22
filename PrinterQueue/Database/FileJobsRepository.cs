@@ -16,8 +16,10 @@ namespace PrinterQueue.Database
             return jobsDB.Jobs.OrderBy(j => j.Order);
         }
 
-        public void AddNewJob(PrinterJob pj)
+        public bool AddNewJob(PrinterJob pj)
         {
+            bool isItJobToPrintNow = false;
+
             if (string.IsNullOrWhiteSpace(pj.Name))
                 throw new ArgumentException("Job name is empty");
 
@@ -33,6 +35,7 @@ namespace PrinterQueue.Database
             {
                 pj.Status = PrintJobStatusEnum.Printing.ToDescription();
                 pj.Order = 1;
+                isItJobToPrintNow = true;
             }
             else
             {
@@ -43,6 +46,8 @@ namespace PrinterQueue.Database
             jobsDB.Jobs.Add(pj);
 
             SetTheJobsDB(jobsDB);
+
+            return isItJobToPrintNow;
         }
 
         public void MoveUp(int id)
@@ -73,8 +78,7 @@ namespace PrinterQueue.Database
 
         public void MoveDown(int id)
         {
-            JobsDB jobsDB = GetTheJobsDB();
-            PrinterJob pj = jobsDB.Jobs.SingleOrDefault(j => j.Id == id);
+            JobsDB jobsDB = GetTheJobsDB();            PrinterJob pj = jobsDB.Jobs.SingleOrDefault(j => j.Id == id);
 
             if (pj == null)
                 throw new ArgumentException("Can't find relevant printing job");
@@ -107,15 +111,14 @@ namespace PrinterQueue.Database
 
             else
             {
-                PrinterJob bottomPG = jobsDB.Jobs.SingleOrDefault(j => j.Order == pj.Order + 1);
-                if (bottomPG != null)
-                {
-                    bottomPG.Status = PrintJobStatusEnum.Printing.ToDescription();
-                    bottomPG.Order--;
-                }
+                PrinterJob nextPG = jobsDB.Jobs.SingleOrDefault(j => j.Order == pj.Order + 1);
+                if (nextPG != null)
+                    nextPG.Status = PrintJobStatusEnum.Printing.ToDescription();
+
+                jobsDB.Jobs.Where(j => j.Order > pj.Order).ToList().ForEach(j => j.Order--);
 
                 pj.Status = PrintJobStatusEnum.Queued.ToDescription();
-                pj.Order++;
+                pj.Order = jobsDB.Jobs.Max(j => j.Order) + 1;
 
                 SetTheJobsDB(jobsDB);
             }
@@ -136,6 +139,32 @@ namespace PrinterQueue.Database
             {
                 jobsDB.Jobs.Where(j => j.Order > pj.Order).ToList().ForEach(j => j.Order--);
                 jobsDB.Jobs.Remove(pj);
+                SetTheJobsDB(jobsDB);
+            }
+        }
+
+        public PrinterJob GetCurrentPrintingJob()
+        {
+            JobsDB jobsDB = GetTheJobsDB();
+            PrinterJob pj = jobsDB.Jobs.SingleOrDefault(j => j.Status == PrintJobStatusEnum.Printing.ToDescription());
+            return pj;
+        }
+
+        public void RemovePrintedJob()
+        {
+            JobsDB jobsDB = GetTheJobsDB();
+            PrinterJob pj = jobsDB.Jobs.SingleOrDefault(j => j.Status == PrintJobStatusEnum.Printing.ToDescription());
+
+            if (pj != null)
+            {
+                PrinterJob nextPG = jobsDB.Jobs.SingleOrDefault(j => j.Order == pj.Order + 1);
+                if (nextPG != null)
+                    nextPG.Status = PrintJobStatusEnum.Printing.ToDescription();
+
+                jobsDB.Jobs.Where(j => j.Order > pj.Order).ToList().ForEach(j => j.Order--);
+
+                jobsDB.Jobs.Remove(pj);
+
                 SetTheJobsDB(jobsDB);
             }
         }
